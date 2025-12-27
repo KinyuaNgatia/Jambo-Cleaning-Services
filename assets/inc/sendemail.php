@@ -1,0 +1,1 @@
+<div class='inner error'><p class='error'>Message could not be sent. Mailer Error: SMTP Error: Could not authenticate.</p></div><!-- /.inner -->
