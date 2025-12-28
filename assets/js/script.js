@@ -1119,15 +1119,90 @@
                     },
                 },
                 submitHandler: function (form) {
-                    // sending value with ajax request
-                    $.post($(form).attr("action"), $(form).serialize(), function (response) {
-                        $(form).parent().find(".result").append(response);
-                        $(form).find('input[type="text"]').val("");
-                        $(form).find('input[type="email"]').val("");
-                        $(form).find("textarea").val("");
-                    });
+                    // sending value with supabase
+                    const formData = new FormData(form);
+                    const data = Object.fromEntries(formData.entries());
+                    const resultDiv = $(form).parent().find(".result");
+                    
+                    if (!window.supabaseClient) {
+                         resultDiv.html('<div class="alert alert-danger">Error: Supabase not initialized.</div>');
+                         return false;
+                    }
+
+                    window.supabaseClient.from('messages').insert([data])
+                        .then(({ error }) => {
+                            if (error) {
+                                resultDiv.html('<div class="alert alert-danger">Error: ' + error.message + '</div>');
+                            } else {
+                                resultDiv.html('<div class="alert alert-success">Message sent successfully!</div>');
+                                $(form)[0].reset();
+                            }
+                        });
                     return false;
                 },
+            });
+        });
+    }
+
+    // === Login Form ===
+    if ($("#login-one__form").length) {
+        $("#login-one__form").on("submit", function (e) {
+            e.preventDefault();
+            const self = $(this);
+            const email = self.find("#formEmail").val();
+            const password = self.find("#formPassword").val();
+            const resultDiv = self.parent().find(".result").length ? self.parent().find(".result") : $('<div class="result"></div>').appendTo(self.parent());
+
+            if (!window.supabaseClient) {
+                resultDiv.html('<div class="alert alert-danger">Error: Supabase not initialized.</div>');
+                return false;
+            }
+
+            window.supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password,
+            }).then(({ data, error }) => {
+                if (error) {
+                    resultDiv.html('<div class="alert alert-danger">Login failed: ' + error.message + '</div>');
+                } else {
+                    resultDiv.html('<div class="alert alert-success">Login successful! Redirecting...</div>');
+                    setTimeout(() => { window.location.href = "index.html"; }, 2000);
+                }
+            });
+        });
+    }
+
+    // === Sign Up Form ===
+    if ($("#sign-up-one__form").length) {
+        $("#sign-up-one__form").on("submit", function (e) {
+            e.preventDefault();
+            const self = $(this);
+            const email = self.find("#formEmail").val();
+            const password = self.find("#formPassword").val();
+            const name = self.find("#formName").val();
+            const phone = self.find("#formPhone").val();
+            const resultDiv = self.parent().find(".result").length ? self.parent().find(".result") : $('<div class="result"></div>').appendTo(self.parent());
+
+            if (!window.supabaseClient) {
+                resultDiv.html('<div class="alert alert-danger">Error: Supabase not initialized.</div>');
+                return false;
+            }
+
+            window.supabaseClient.auth.signUp({
+                email: email,
+                password: password,
+                options: {
+                    data: {
+                        full_name: name,
+                        phone: phone
+                    }
+                }
+            }).then(({ data, error }) => {
+                if (error) {
+                    resultDiv.html('<div class="alert alert-danger">Signup failed: ' + error.message + '</div>');
+                } else {
+                    resultDiv.html('<div class="alert alert-success">Signup successful! Please check your email for verification.</div>');
+                }
             });
         });
     }
